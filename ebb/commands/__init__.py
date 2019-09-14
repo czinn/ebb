@@ -1,13 +1,29 @@
 import importlib
 import os
 import glob
+from functools import wraps
+
+from ebb import ui
 
 registry = {}
 
-def add(name):
+def add(name, commit=False):
     def inner(f):
-        registry[name] = f
-        return f
+        @wraps(f)
+        def run(session):
+            f(session)
+            if commit:
+                if ui.confirm('Confirm', default=False):
+                    try:
+                        session.commit()
+                        ui.print('Success')
+                    except:
+                        ui.print('Failure')
+                else:
+                    session.rollback()
+                    ui.print('Command cancelled')
+        registry[name] = run
+        return run
     return inner
 
 def command_list():

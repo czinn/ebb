@@ -3,19 +3,24 @@ from sqlalchemy.orm import sessionmaker
 from prompt_toolkit.history import InMemoryHistory
 
 from db import Session
-from ui import prompt_options
+import ui
 from commands import command_list, get_command
 
 def main():
     history = InMemoryHistory()
     while(True):
-        command_name = prompt_options('>', command_list(), strict=True, history=history)
+        command_name = ui.prompt_options('>', command_list(), strict=True, history=history)
         try:
             command = get_command(command_name)
         except:
-            print('Invalid command')
+            ui.print('Invalid command')
             continue
-        command(Session())
+        session = Session()
+        try:
+            command(session)
+        except KeyboardInterrupt:
+            session.rollback()
+            ui.print('Command cancelled')
 
 if __name__ == '__main__':
     try:

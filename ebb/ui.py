@@ -24,40 +24,47 @@ class RegexValidator(Validator):
         if fail_i is not None:
             raise ValidationError(message=self.error_message,  cursor_position=fail_i)
 
-def prompt(message, default=None):
-    result = p(message +  ' ', vi_mode=True)
+class NonemptyValidator(Validator):
+    def validate(self, document):
+        text = document.text
+        if len(text) == 0:
+            raise ValidationError(message='Input must not be empty', cursor_position=0)
+
+def prompt(message, regex=None, regex_error='Invalid input', default=None, history=None, completer=None):
+    validator = RegexValidator(regex, regex_error, default is not None) \
+            if regex else NonemptyValidator()
+    result = p(message +  ' ', vi_mode=True, history=history,
+            validator=validator, completer=completer)
     if default is not None and result == '':
         return default
     return result
 
-def prompt_integer(message, default=None):
-    validator = RegexValidator('0|[1-9][0-9]*', 'Enter an integer',
-            default is not None)
-    result = p(message + ' ', vi_mode=True, validator=validator)
-    if default is not None and result == '':
-        return default
-    return int(result)
+def prompt_integer(message, default=None, history=None):
+    default = str(default) if default is not None else None
+    return int(prompt(message, default=default, regex='0|[1-9][0-9]*',
+        regex_error='Enter an integer', history=history))
 
-def prompt_number(message, default=None):
-    validator = RegexValidator('([1-9][0-9]*\\.?|0?\\.)[0-9]*|0',
-            'Enter a number', default is not None)
-    result = p(message + ' ', vi_mode=True, validator=validator)
-    if default is not None and result == '':
-        return default
-    return float(result)
+def prompt_number(message, default=None, history=None):
+    default = str(default) if default is not None else None
+    return float(prompt(message, default=default,
+        regex='([1-9][0-9]*\\.?|0?\\.)[0-9]*|0', regex_error='Enter a number',
+        history=history))
 
 def confirm(message, default=None):
     valid = {"yes": True, "y": True, "ye": True,
              "no": False, "n": False}
+    default_value = None
     if default is None:
-        yn = " [yn] "
+        yn = " [yn]:"
     elif default:
-        yn = " [Yn] "
+        yn = " [Yn]:"
+        default_value = 'y'
     elif not default:
-        yn = " [yN] "
+        yn = " [yN]:"
+        default_value = 'n'
 
     while True:
-        choice = prompt(message + yn).lower()
+        choice = prompt(message + yn, regex='y(es?)?|no?', default=default_value).lower()
         if default is not None and choice == '':
             return default
         elif choice in valid:
@@ -72,7 +79,7 @@ def prompt_options(message, options, strict=False, history=None):
                 error_message='', move_cursor_to_end=False)
         return p(message + ' ', completer=completer, vi_mode=True,
                 validator=validator, history=history)
-    return p(message + ' ', completer=completer, vi_mode=True, history=history)
+    return prompt(message, completer=completer, history=history)
 
 def prompt_model(message, session, model_cls, to_string, of_string=None):
     models = session.query(model_cls).all()
