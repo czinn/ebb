@@ -13,7 +13,7 @@ def add(name):
 def command_list():
     return list(registry.keys())
 
-def get(command):
+def get_command(command):
     return registry[command]
 
 module_paths = glob.glob(os.path.join(os.path.dirname(__file__), '*.py'))

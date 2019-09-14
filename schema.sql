@@ -1,13 +1,13 @@
 create table if not exists currencies (
   id integer primary key,
-  code text not null,
+  code text not null unique,
   major not null,
   equivalent_usd real not null
 );
 
 create table if not exists accounts (
   id integer primary key,
-  name text not null,
+  name text not null unique,
   currency_id integer not null,
   foreign key (currency_id) references currencies (id)
 );
@@ -22,7 +22,7 @@ create table if not exists balances (
 
 create table if not exists categories (
   id integer primary key,
-  name text not null,
+  name text not null unique,
   parent_id integer,
   default_amortization_type integer,
   default_amortization_length integer,
@@ -31,7 +31,7 @@ create table if not exists categories (
 
 create table if not exists payees (
   id integer primary key,
-  name text not null
+  name text not null unique
 );
 
 create table if not exists transactions (
