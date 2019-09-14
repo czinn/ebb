@@ -65,15 +65,15 @@ class Category(Base):
     # Name for the category
     name = Column(String, nullable=False)
     # Parent category
-    parent_id = Column(Integer, ForeignKey('categories.id'))
+    parent_id = Column(Integer, ForeignKey('categories.id'), nullable=True)
     subcategories = relationship('Category', backref=backref('parent', remote_side=[id]))
     # Default amortization type (see Flow for details)
-    amortization_type = Column(Enum(AmortizationType), nullable=True)
+    default_amortization_type = Column(Enum(AmortizationType), nullable=True)
     # Default amortization duration (see Flow for details)
-    amortization_length = Column(Integer, nullable=True)
+    default_amortization_length = Column(Integer, nullable=True)
 
     def __repr__(self):
-        if parent_id is not None:
+        if self.parent_id is not None:
             return '<Category(name={}, parent={})>'.format(
                     self.name, self.parent.name)
         else:

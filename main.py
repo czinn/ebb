@@ -1,8 +1,13 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from models import *
+from db import Session
+from commands import command_list, get
 
-engine = create_engine('sqlite:///db.sqlite3', echo=True)
-Session = sessionmaker(bind=engine)
 session = Session()
+
+def main():
+    print(command_list())
+
+if __name__ == '__main__':
+    main()
