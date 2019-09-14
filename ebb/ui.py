@@ -1,9 +1,11 @@
 import re
+from collections import namedtuple
 
 from prompt_toolkit import print_formatted_text as print
 from prompt_toolkit import prompt as p
 from prompt_toolkit.completion import FuzzyWordCompleter
 from prompt_toolkit.validation import Validator, ValidationError
+from prompt_toolkit.formatted_text import to_formatted_text, fragment_list_width, HTML, FormattedText
 
 class RegexValidator(Validator):
     def __init__(self, pattern, error_message, has_default=False):
@@ -91,3 +93,41 @@ def prompt_model(message, session, model_cls, to_string, of_string=None):
     else:
         selected_model = model_map[selection]
     return selected_model
+
+def trim_pad(formatted_text, width, align):
+    text_width = fragment_list_width(formatted_text)
+    if text_width == width:
+        return formatted_text
+    if text_width < width:
+        left_pad = width - text_width if align == 'r' else 0
+        right_pad = width - text_width if align == 'l' else 0
+        return [('', ' ' * left_pad)] + formatted_text + [('', ' ' * right_pad)]
+    trimmed = []
+    width -= 3
+    while fragment_list_width(trimmed) < width:
+        trimmed.append(formatted_text.pop(0))
+    if fragment_list_width(trimmed) > width:
+        trimmed[-1] = (trimmed[-1][0],
+                trimmed[-1][1][:-(fragment_list_width(trimmed) - width)])
+    return trimmed + [('', '...')]
+
+Column = namedtuple('Column', ['header', 'align', 'max_width'])
+def draw_table(columns, data):
+    column_widths = [0 for _ in columns]
+    data = [[to_formatted_text(cell) for cell in row] for row in data]
+    for row in data:
+        for i, cell in enumerate(row):
+            column_widths[i] = max(column_widths[i], fragment_list_width(cell))
+    row_output = []
+    for i, column in enumerate(columns):
+        column_widths[i] = max(column_widths[i], len(column.header))
+        column_widths[i] = min(column_widths[i], column.max_width)
+        row_output += trim_pad(to_formatted_text(HTML(f'<b>{column.header}</b>')),
+                column_widths[i], 'l') + [('', '  ')]
+    print(FormattedText(row_output))
+    for row in data:
+        row_output = []
+        for i, cell in enumerate(row):
+            row_output += trim_pad(cell, column_widths[i], columns[i].align) + \
+                    [('', '  ')]
+        print(FormattedText(row_output))
