@@ -1,4 +1,5 @@
 import enum
+from collections import namedtuple
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date, Enum
@@ -20,6 +21,10 @@ class Currency(Base):
     def __repr__(self):
         return '<Currency(code={}, major={}, equivalent_usd={:.2f})>'.format(
                 self.code, self.major, self.equivalent_usd)
+
+class Money(namedtuple('Money', ['amount', 'currency'])):
+    def __str__(self):
+        return f'${self.amount / self.currency.major:.2f}'
 
 class Account(Base):
     __tablename__ = 'accounts'

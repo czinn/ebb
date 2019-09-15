@@ -1,11 +1,14 @@
-import re
 from collections import namedtuple
+import datetime
+import re
 
 from prompt_toolkit import print_formatted_text as print
 from prompt_toolkit import prompt as p
 from prompt_toolkit.completion import FuzzyWordCompleter
 from prompt_toolkit.validation import Validator, ValidationError
 from prompt_toolkit.formatted_text import to_formatted_text, fragment_list_width, HTML, FormattedText
+
+from ebb.models import Money
 
 class RegexValidator(Validator):
     def __init__(self, pattern, error_message, has_default=False):
@@ -32,7 +35,8 @@ class NonemptyValidator(Validator):
         if len(text) == 0:
             raise ValidationError(message='Input must not be empty', cursor_position=0)
 
-def prompt(message, regex=None, regex_error='Invalid input', default=None, history=None, completer=None):
+def prompt(message, regex=None, regex_error='Invalid input', default=None,
+        history=None, completer=None):
     validator = RegexValidator(regex, regex_error, default is not None) \
             if regex else NonemptyValidator()
     result = p(message +  ' ', vi_mode=True, history=history,
@@ -51,6 +55,18 @@ def prompt_number(message, default=None, history=None):
     return float(prompt(message, default=default,
         regex='-?([1-9][0-9]*\\.?|0?\\.)[0-9]*|0', regex_error='Enter a number',
         history=history))
+
+def prompt_money(message, currency, **kwargs):
+    amount = prompt_number(message, **kwargs)
+    amount_int = int(amount * currency.major + 0.5)
+    return Money(amount_int, currency)
+
+def prompt_date(message, default=None):
+    default = default.isoformat() if default is not None else None
+    return datetime.date.fromisoformat(
+            # TODO: use an actual date validator here, rather than a regex
+            prompt(message, default=default, regex='\d\d\d\d-\d\d-\d\d',
+                regex_error='Enter a date'))
 
 def confirm(message, default=None):
     valid = {"yes": True, "y": True, "ye": True,
