@@ -54,13 +54,12 @@ class Balance(Base):
                 self.account.name, self.date, self.amount)
 
 class AmortizationType(enum.Enum):
-    NONE = 0
-    LINEAR = 1
-    DECLINING = 2
+    LINEAR = 0
+    DECLINING = 1
 
 class Category(Base):
     __tablename__ = 'categories'
-    
+
     id = Column(Integer, primary_key=True)
     # Name for the category
     name = Column(String, nullable=False)

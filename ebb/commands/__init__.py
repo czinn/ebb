@@ -13,7 +13,7 @@ def add(name, commit=False):
         def run(session):
             f(session)
             if commit:
-                if ui.confirm('Confirm', default=False):
+                if ui.confirm('Confirm'):
                     try:
                         session.commit()
                         ui.print('Success')

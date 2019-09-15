@@ -43,13 +43,13 @@ def prompt(message, regex=None, regex_error='Invalid input', default=None, histo
 
 def prompt_integer(message, default=None, history=None):
     default = str(default) if default is not None else None
-    return int(prompt(message, default=default, regex='0|[1-9][0-9]*',
+    return int(prompt(message, default=default, regex='0|-?[1-9][0-9]*',
         regex_error='Enter an integer', history=history))
 
 def prompt_number(message, default=None, history=None):
     default = str(default) if default is not None else None
     return float(prompt(message, default=default,
-        regex='([1-9][0-9]*\\.?|0?\\.)[0-9]*|0', regex_error='Enter a number',
+        regex='-?([1-9][0-9]*\\.?|0?\\.)[0-9]*|0', regex_error='Enter a number',
         history=history))
 
 def confirm(message, default=None):
@@ -83,16 +83,30 @@ def prompt_options(message, options, strict=False, history=None):
                 validator=validator, history=history)
     return prompt(message, completer=completer, history=history)
 
-def prompt_model(message, session, model_cls, to_string, of_string=None):
+def prompt_model(message, session, model_cls, to_string, of_string=None, nullable=False):
     models = session.query(model_cls).all()
     model_map = {to_string(m): m for m in models}
-    selection = prompt_options(message, model_map.keys(), strict=of_string is None)
+    options = list(model_map.keys())
+    if nullable:
+        options.append('')
+    selection = prompt_options(message, options, strict=of_string is None)
     if selection not in model_map:
+        if selection == '':
+            return None
         selected_model = of_string(selection)
         session.add(selected_model)
     else:
         selected_model = model_map[selection]
     return selected_model
+
+def prompt_enum(message, enum, default=None, **kwargs):
+    options = [key.title() for key in enum.__members__.keys()]
+    if default is not None:
+        options.append('')
+    selection = prompt_options(message, options, strict=True, **kwargs).upper()
+    if selection not in enum.__members__:
+        return default
+    return enum.__members__[selection]
 
 def trim_pad(formatted_text, width, align):
     text_width = fragment_list_width(formatted_text)
