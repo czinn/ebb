@@ -21,3 +21,12 @@ def get_account_balance(session, account, as_of=datetime.date.today()):
                     BalanceDelta.date <= as_of).one()[0]
 
     return Money(balance_amount + update_sum, account.currency)
+
+# Get all transactions that modified the balance of an account between the
+# start and end dates.
+def get_account_transactions(session, account, start=datetime.date.min,
+        end=datetime.date.max):
+    return session.query(Transaction).join(BalanceDelta) \
+            .filter(BalanceDelta.account == account) \
+            .filter(BalanceDelta.date >= start) \
+            .filter(BalanceDelta.date <= end).all()

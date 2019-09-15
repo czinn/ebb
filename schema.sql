@@ -54,10 +54,12 @@ create table if not exists flows (
   category_id integer not null,
   payee_id integer not null,
   date text not null,
-  description text not null,
+  description text,
   amount integer not null,
+  currency_id integer not null,
   amortization_type integer,
   amortization_length integer,
   foreign key (transaction_id) references transactions(id),
-  foreign key (category_id) references categories(id)
+  foreign key (category_id) references categories(id),
+  foreign key (currency_id) references currencies (id)
 );

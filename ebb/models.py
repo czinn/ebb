@@ -128,6 +128,10 @@ class BalanceDelta(Base):
         return '<BalanceDelta(transaction={}, account={}, date={}, amount={})>'.format(
                 self.transaction_id, self.account.name, self.date, self.amount)
 
+    @property
+    def money(self):
+        return Money(self.amount, self.account.currency)
+
 class Flow(Base):
     __tablename__ = 'flows'
 
@@ -144,9 +148,12 @@ class Flow(Base):
     # Date on which delta occurred (for real, not the posting date)
     date = Column(Date, nullable=False)
     # Description of the flow
-    description = Column(String, nullable=False)
+    description = Column(String, nullable=True)
     # Amount (negative for debit, positive for credit)
     amount = Column(Integer, nullable=False)
+    # Currency associated with the flow
+    currency_id = Column(Integer, ForeignKey('currencies.id'), nullable=False)
+    currency = relationship('Currency')
     # How the flow should be amortized
     amortization_type = Column(Enum(AmortizationType), nullable=True)
     # Duration over which flow should be amortized (note that for e.g.
@@ -160,3 +167,7 @@ class Flow(Base):
                         self.date, self.transaction_id, self.category.name,
                         self.payee.name, self.description, self.amount,
                         self.amortization_type, self.amortization_length)
+
+    @property
+    def money(self):
+        return Money(self.amount, self.currency)
