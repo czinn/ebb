@@ -24,7 +24,11 @@ class Currency(Base):
 
 class Money(namedtuple('Money', ['amount', 'currency'])):
     def __str__(self):
-        return f'${self.amount / self.currency.major:.2f}'
+        return f'${self.major_amount:.2f}'
+
+    @property
+    def major_amount(self):
+        return self.amount / self.currency.major
 
 class Account(Base):
     __tablename__ = 'accounts'
