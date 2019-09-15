@@ -14,7 +14,7 @@ def run(session):
 
     # Find the most recent category for that payee, for a default
     recent_category = session.query(Flow).filter(Flow.payee == payee) \
-            .order_by(Flow.date.desc()).first()
+            .order_by(Flow.date.desc()).first().category
     if recent_category is not None:
         category = prompt_model(f'Category ({recent_category.name}):', session,
                 Category, lambda category: category.name, nullable=True)

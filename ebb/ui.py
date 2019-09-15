@@ -58,7 +58,7 @@ def prompt_number(message, default=None, history=None):
 
 def prompt_money(message, currency, **kwargs):
     amount = prompt_number(message, **kwargs)
-    amount_int = int(amount * currency.major + 0.5)
+    amount_int = int(round(amount * currency.major))
     return Money(amount_int, currency)
 
 def prompt_date(message, default=None):
