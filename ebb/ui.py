@@ -36,9 +36,9 @@ class NonemptyValidator(Validator):
             raise ValidationError(message='Input must not be empty', cursor_position=0)
 
 def prompt(message, regex=None, regex_error='Invalid input', default=None,
-        history=None, completer=None):
+        history=None, completer=None, nullable=False):
     validator = RegexValidator(regex, regex_error, default is not None) \
-            if regex else NonemptyValidator()
+            if regex else NonemptyValidator() if not nullable else None
     result = p(message +  ' ', vi_mode=True, history=history,
             validator=validator, completer=completer)
     if default is not None and result == '':
@@ -115,7 +115,7 @@ def prompt_model(message, session, model_cls, to_string, of_string=None, nullabl
         selected_model = model_map[selection]
     return selected_model
 
-def prompt_enum(message, enum, default=None, **kwargs):
+def prompt_enum(message, enum, default=None, nullable=False, **kwargs):
     options = [key.title() for key in enum.__members__.keys()]
     if default is not None:
         options.append('')

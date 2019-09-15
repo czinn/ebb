@@ -16,7 +16,7 @@ def add(name, commit=False):
                 if ui.confirm('Confirm'):
                     try:
                         session.commit()
-                        ui.print('Success')
+                        ui.print('Done')
                     except:
                         ui.print('Failure')
                 else:

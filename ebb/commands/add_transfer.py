@@ -8,12 +8,12 @@ from ebb.queries import get_account_balance
 @add('add-transfer', commit=True)
 def run(session):
     from_account = prompt_model('From account:', session, Account, lambda account: account.name)
-    to_account = prompt_model('From account:', session, Account, lambda account: account.name)
+    to_account = prompt_model('To account:', session, Account, lambda account: account.name)
     from_date = prompt_date('From date (today):', default=datetime.date.today())
     to_date = prompt_date(f'To date ({from_date.isoformat()}):', default=from_date)
-    from_money = prompt_money('Amount:', from_account.currency)
+    from_money = prompt_money(f'Amount ({from_account.currency.code}):', from_account.currency)
     if from_account.currency != to_account.currency:
-        to_money = prompt_money(f'To amount (in {to_account.currency.code}):',
+        to_money = prompt_money(f'To amount ({to_account.currency.code}):',
                 to_account.currency)
     else:
         # TODO: add support for fees in the case of same-currency transfers (or
