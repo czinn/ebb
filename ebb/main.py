@@ -1,12 +1,19 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from prompt_toolkit.history import InMemoryHistory
+import argparse
 
-from db import Session
+from prompt_toolkit.history import InMemoryHistory
+from sqlalchemy import create_engine
+
+from db import Session, connect
 import ui
 from commands import command_list, get_command
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('db', help='db connection string')
+    args = parser.parse_args()
+
+    connect(args.db)
+
     history = InMemoryHistory()
     while(True):
         command_name = ui.prompt_options('>', command_list(), strict=True, history=history)
