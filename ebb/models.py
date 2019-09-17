@@ -30,6 +30,10 @@ class Money(namedtuple('Money', ['amount', 'currency'])):
     def major_amount(self):
         return self.amount / self.currency.major
 
+    def usd_amount(self):
+        return int(round(self.amount / self.currency.major * \
+                self.currency.equivalent_usd * 100))
+
 class Account(Base):
     __tablename__ = 'accounts'
 
