@@ -1,6 +1,8 @@
 import datetime
+from collections import defaultdict
 
 from sqlalchemy.sql import func
+from sqlalchemy.orm import joinedload
 
 from ebb.models import *
 
@@ -30,3 +32,15 @@ def get_account_transactions(session, account, start=datetime.date.min,
             .filter(BalanceDelta.account == account) \
             .filter(BalanceDelta.date >= start) \
             .filter(BalanceDelta.date <= end).all()
+
+def spending_by_category(session, start=datetime.date.min, end=datetime.date.max):
+    # TODO: filter this to only include relevant transactions
+    flows = session.query(Flow).options(joinedload(Flow.category)).all()
+    spending = defaultdict(float)
+    day = datetime.timedelta(days=1)
+    for flow in flows:
+        date = start
+        while date <= end:
+            spending[flow.category.name] += flow.amount_on_date(date).usd_amount()
+            date += day
+    return { key: int(round(value)) for key, value in spending.items() }

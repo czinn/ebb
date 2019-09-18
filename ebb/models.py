@@ -1,8 +1,9 @@
 import enum
 from collections import namedtuple
 
-from sqlalchemy.ext.declarative import declarative_base
+from prompt_toolkit.formatted_text import HTML
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date, Enum
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref
 
 Base = declarative_base()
@@ -24,7 +25,12 @@ class Currency(Base):
 
 class Money(namedtuple('Money', ['amount', 'currency'])):
     def __str__(self):
-        return f'${self.major_amount:.2f}'
+        sign = '+' if self.amount > 0 else '' if self.amount == 0 else '-'
+        return f'{sign}${abs(self.major_amount):.2f}'
+
+    def __pt_formatted_text__(self):
+        colour = 'green' if self.amount > 0 else 'white' if self.amount == 0 else 'red'
+        return HTML(f'<{colour}>{self}</{colour}>').__pt_formatted_text__()
 
     @property
     def major_amount(self):
@@ -67,8 +73,8 @@ class Balance(Base):
                 self.account.name, self.date, self.amount)
 
 class AmortizationType(enum.Enum):
-    LINEAR = 0
-    DECLINING = 1
+    LINEAR = 1
+    DECLINING = 2
 
 class Category(Base):
     __tablename__ = 'categories'
@@ -175,3 +181,22 @@ class Flow(Base):
     @property
     def money(self):
         return Money(self.amount, self.currency)
+
+    def amount_on_date(self, date):
+        if date < self.date:
+            return Money(0, self.currency)
+        amortization_type = self.amortization_type or \
+                self.category.default_amortization_type
+        amortization_length = self.amortization_length or \
+                self.category.default_amortization_length
+        days_since_start = (date - self.date).days
+        if amortization_type == AmortizationType.LINEAR:
+            if days_since_start >= amortization_length:
+                return Money(0, self.currency)
+            return Money(int(round(self.amount / amortization_length)), self.currency)
+        elif amortization_type == AmortizationType.DECLINING:
+            decline_rate = 2 / amortization_length
+            return Money(int(round(self.amount * (1 - decline_rate) ** \
+                    days_since_start * decline_rate)), self.currency)
+
+    # TODO: write and use formulae that compute the amount for a date range in one step
