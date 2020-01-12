@@ -26,12 +26,21 @@ def get_account_balance(session, account, as_of=datetime.date.today()):
 
 # Get all transactions that modified the balance of an account between the
 # start and end dates.
-def get_account_transactions(session, account, start=datetime.date.min,
-        end=datetime.date.max):
-    return session.query(Transaction).join(BalanceDelta) \
+def get_account_transactions(session, account, start=None,
+        end=None, limit=None):
+    query = session.query(Transaction).join(BalanceDelta) \
             .filter(BalanceDelta.account == account) \
-            .filter(BalanceDelta.date >= start) \
-            .filter(BalanceDelta.date <= end).all()
+            .options(joinedload(Transaction.balance_deltas)) \
+            .options(joinedload(Transaction.flows)) \
+            .order_by(BalanceDelta.date.desc())
+
+    if start is not None:
+        query = query.filter(BalanceDelta.date >= start)
+    if end is not None:
+        query = query.filter(BalanceDelta.date <= end)
+    if limit is not None:
+        query = query.limit(limit)
+    return query.all()
 
 def spending_by_category(session, start=datetime.date.min, end=datetime.date.max):
     # TODO: filter this to only include relevant transactions
